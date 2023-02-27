@@ -49,8 +49,8 @@ def extract_names(html)
 end
 
 def namediff(oldlist, newlist)
-  downcased = newlist.map { |name| name.downcase }
-  oldlist.reject { |name| downcased.include?(name.downcase) }
+  downcased = newlist.map { |name| name.downcase.gsub(/\s+/, " ") }
+  oldlist.reject { |name| downcased.include?(name.downcase.gsub(/\s+/, " ")) }
 end
 
 def update_results
@@ -61,7 +61,7 @@ def update_results
 
   names422 = extract_names(html)
   names574 = extract_names(`curl -s https://olis.oregonlegislature.gov/liz/2021R1/Measures/Testimony/SB574`)
-  diffs = namediff(names574, names422).sort_by { |name| name.split(" ").last.downcase }.uniq
+  diffs = namediff(names574, names422).sort_by { |name| name.split(" ").last.downcase }.map { |name| name.gsub(/\s+/, " ").strip }.uniq
   IO.write("missing_names.txt", diffs.join("\n"))
 
   total_testimony = lines.select { |line| line.include?("/liz/2023R1/Downloads/PublicTestimonyDocument/") }.count
