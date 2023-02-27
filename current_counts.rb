@@ -89,7 +89,7 @@ def prune_bad_testimony_files
 end
 
 def needs_update?
-  Time.now - $last_update > 15
+  Time.now - $last_update >  1*60
 end
 
 def needs_prune?
