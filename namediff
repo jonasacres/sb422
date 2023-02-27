@@ -1,0 +1,54 @@
+#!/usr/bin/ruby
+
+# Copyright (c) 2023 Jonas Acres
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+def extract_names(html)
+  state = {td:0}
+  names = []
+
+  html.split("\n").map do |line|
+    next unless line.include?("<td")
+    state = {td:0} if line.include?(%Q{<td><a href="/liz/2021R1/Downloads/PublicTestimonyDocument/})
+    state[:td] += 1
+    content = line.match(/<td[^>]*>(.*)<\/td>/)[1] rescue line
+
+    case state[:td]
+    when 2
+      state[:name] = content
+    when 4
+      names << state[:name] if content.include?("Support")
+    end
+  end
+
+  names
+end
+
+def namediff(oldlist, newlist)
+  downcased = newlist.map { |name| name.downcase }
+  oldlist.reject { |name| downcased.include?(name.downcase) }
+end
+
+names422 = extract_names(`curl -s https://olis.oregonlegislature.gov/liz/2023R1/Measures/Testimony/SB422`)
+names574 = extract_names(`curl -s https://olis.oregonlegislature.gov/liz/2021R1/Measures/Testimony/SB574`)
+
+diffs = namediff(names574, names422).sort_by { |name| name.split(" ").last.downcase }.uniq
+
+puts "MISSING NAMES:\n#{diffs.join("\n")}"

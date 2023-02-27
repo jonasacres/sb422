@@ -33,7 +33,7 @@ def extract_names(html)
 
   html.split("\n").map do |line|
     next unless line.include?("<td")
-    state = {td:0} if line.include?(%Q{<td><a href="/liz/2021R1/Downloads/PublicTestimonyDocument/})
+    state = {td:0} if line.match(/<td><a href="\/liz\/[a-zA-Z0-9]+\/Downloads\/PublicTestimonyDocument\//)
     state[:td] += 1
     content = line.match(/<td[^>]*>(.*)<\/td>/)[1] rescue line
 
@@ -49,8 +49,8 @@ def extract_names(html)
 end
 
 def namediff(oldlist, newlist)
-  downcased = newlist.map { |name| name.downcase.gsub(/\s+/, " ") }
-  oldlist.reject { |name| downcased.include?(name.downcase.gsub(/\s+/, " ")) }
+  downcased = newlist.map { |name| name.downcase.strip.gsub(/\s+/, " ") }
+  oldlist.reject { |name| downcased.include?(name.downcase.strip.gsub(/\s+/, " ")) }
 end
 
 def update_results
