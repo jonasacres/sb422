@@ -84,6 +84,7 @@ def prune_bad_testimony_files
   $last_prune = Time.now
   Dir.glob("testimony/*.pdf")
      .reject { |path| valid_pdf?(path) }
+     .reject { |path| Time.now - File.mtime(path) < 5*60 }
      .each   { |path| puts "Unlinking bad testimony file: #{path}" ; File.unlink(path) }
 end
 
