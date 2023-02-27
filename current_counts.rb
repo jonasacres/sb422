@@ -70,7 +70,7 @@ def regenerate
 
   txtfile = Dir.glob("testimony/*.txt").sort.map do |path|
     url = prefix + File.basename(path, ".txt")
-    "===== BEGIN TESITMONY =====\n#{url}\n" + IO.read(path) + "===== END TESTIMONY =====\n"
+    "===== BEGIN TESTIMONY =====\n#{url}\n" + IO.read(path) + "===== END TESTIMONY =====\n"
   end.join("\n\n")
 
   IO.write("all-testimony.txt", txtfile)
