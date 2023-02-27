@@ -27,9 +27,42 @@ configure do
   set :protection, :except => [:json_csrf]
 end
 
+def extract_names(html)
+  state = {td:0}
+  names = []
+
+  html.split("\n").map do |line|
+    next unless line.include?("<td")
+    state = {td:0} if line.include?(%Q{<td><a href="/liz/2021R1/Downloads/PublicTestimonyDocument/})
+    state[:td] += 1
+    content = line.match(/<td[^>]*>(.*)<\/td>/)[1] rescue line
+
+    case state[:td]
+    when 2
+      state[:name] = content
+    when 4
+      names << state[:name] if content.include?("Support")
+    end
+  end
+
+  names
+end
+
+def namediff(oldlist, newlist)
+  downcased = newlist.map { |name| name.downcase }
+  oldlist.reject { |name| downcased.include?(name.downcase) }
+end
+
 def update_results
-  lines = `curl -s https://olis.oregonlegislature.gov/liz/2023R1/Measures/Testimony/SB422`.split("\n")
+  html = `curl -s https://olis.oregonlegislature.gov/liz/2023R1/Measures/Testimony/SB422`
   return $last_results unless $?.to_i == 0
+
+  lines = html.split("\n")
+
+  names422 = extract_names(html)
+  names574 = extract_names(`curl -s https://olis.oregonlegislature.gov/liz/2021R1/Measures/Testimony/SB574`)
+  diffs = namediff(names574, names422).sort_by { |name| name.split(" ").last.downcase }.uniq
+  IO.write("missing_names.txt", diffs.join("\n"))
 
   total_testimony = lines.select { |line| line.include?("/liz/2023R1/Downloads/PublicTestimonyDocument/") }.count
   total_support   = lines.select { |line| line.include?("Support") }.count - 1
@@ -77,7 +110,7 @@ def regenerate
 end
 
 def valid_pdf?(path)
-  File.size(path) > 0 && IO.read(path)[0] == "%"
+  File.exists?(path) && File.size(path) > 0 && IO.read(path)[0] == "%"
 end
 
 def prune_bad_testimony_files
@@ -100,16 +133,22 @@ def needs_regeneration?
   Time.now - $last_regen  >  5*60
 end
 
+$last_prune = Time.at(0)
+$last_regen = Time.at(0)
+$last_update = Time.at(0)
+
 Dir.mkdir("testimony") unless File.exists?("testimony")
 
 puts "Performing initial update..."
 update_results
 
-puts "Pruning bad testimony..."
-prune_bad_testimony_files
+unless File.exists?("all-testimony.txt") && File.exists?("all-testimony.pdf") then
+  puts "Pruning bad testimony..."
+  prune_bad_testimony_files
 
-puts "Regenerating merged PDF and TXT files..."
-regenerate
+  puts "Regenerating merged PDF and TXT files..."
+  regenerate
+end
 
 puts "Ready to rock and roll!"
 
@@ -163,6 +202,7 @@ get '/' do
 
   <footer>
     <p><a href="/source">Source code</a>, <a href="/testimony.json">JSON</a>, <a href="/testimony.pdf">Big PDF</a>, <a href="/testimony.txt">Textfile</a></p>
+    <p>And <a href="/missing.txt">here is a list</a> of #{IO.read("missing_names.txt").split("\n").count} people who testified on SB 574 in 2021 who haven't written in for SB 422 yet. Can you reach out to any?</p>
   </footer>
 </body>
 </html>
@@ -182,6 +222,11 @@ end
 get '/testimony.pdf' do
   content_type "application/pdf"
   IO.read("all-testimony.pdf")
+end
+
+get '/missing.txt' do
+  content_type "text/plain"
+  IO.read("missing_names.txt")
 end
 
 get '/source' do
