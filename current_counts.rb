@@ -201,7 +201,12 @@ get '/' do
   </table></div>
 
   <footer>
-    <p><a href="/source">Source code</a>, <a href="/testimony.json">JSON</a>, <a href="/testimony.pdf">Big PDF</a>, <a href="/testimony.txt">Textfile</a></p>
+    <div class="lists"><ul class="nes-list is-disc">
+      <li>Here's <a href="/source">source code</a>, if you want to reuse this site for another bill</li>
+      <li>And here's the numbers as <a href="/testimony.json">JSON</a>, if you want to get live data for a dashboard</li>
+      <li>All the testimony as <a href="/testimony.pdf">One Big PDF</a></li>
+      <li>All the testimony as <a href="/testimony.txt">A Plain Old Text File</a>, so you can search it for keywords and stuff</li>
+    </ul></div>
     <p>And <a href="/missing.txt">here is a list</a> of #{IO.read("missing_names.txt").split("\n").count} people who testified on SB 574 in 2021 who haven't written in for SB 422 yet. Can you reach out to any?</p>
   </footer>
 </body>
