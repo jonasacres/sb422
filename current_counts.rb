@@ -216,7 +216,7 @@ end
 
 get '/testimony.json' do
   content_type "application/json"
-  update_results.to_json
+  $last_results.to_json
 end
 
 get '/testimony.txt' do
