@@ -54,8 +54,12 @@ def namediff(oldlist, newlist)
 end
 
 def update_results
+  puts "Starting update..."
   html = `curl -s https://olis.oregonlegislature.gov/liz/2023R1/Measures/Testimony/SB422`
-  return $last_results unless $?.to_i == 0
+  unless $?.to_i == 0 then
+    STDERR.puts "Update curl request encountered error #{$?.to_i}\n#{html}"
+    return $last_results
+  end
 
   lines = html.split("\n")
 
