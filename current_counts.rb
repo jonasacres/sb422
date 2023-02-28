@@ -72,6 +72,9 @@ def update_results
   $last_regen   = Time.at(0) if $last_results.nil? || total_testimony != $last_results[:all]
   $last_update  = Time.now
   $last_results = { all: total_testimony, support: total_support, oppose: total_oppose, unknown: total_unknown }
+
+  puts "Updated results: #{$last_results.to_json}"
+  $last_results
 end
 
 def regenerate
