@@ -54,7 +54,7 @@ def namediff(oldlist, newlist)
 end
 
 def update_results
-  puts "Starting update..."
+  STDERR.puts "Starting update..."
   html = `curl -s https://olis.oregonlegislature.gov/liz/2023R1/Measures/Testimony/SB422`
   unless $?.to_i == 0 then
     STDERR.puts "Update curl request encountered error #{$?.to_i}\n#{html}"
@@ -77,7 +77,7 @@ def update_results
   $last_update  = Time.now
   $last_results = { all: total_testimony, support: total_support, oppose: total_oppose, unknown: total_unknown }
 
-  puts "Updated results: #{$last_results.to_json}"
+  STDERR.puts "Updated results: #{$last_results.to_json}"
   $last_results
 end
 
@@ -89,7 +89,7 @@ def regenerate
              .map { |match| match[1].split("/").last }
   to_download = ids.reject { |id| File.exists?("testimony/#{id}.pdf") }
 
-  $last_update = Time.now
+  $last_regen = Time.now
   return if to_download.empty?
 
   to_download.each do |id|
