@@ -94,17 +94,17 @@ def regenerate
 
   to_download.each do |id|
     url = prefix + id.to_s
-    puts "Downloading PDF: #{url}"
+    STDERR.puts "Downloading PDF: #{url}"
     IO.write("testimony/#{id}.pdf", `curl -s #{url}`)
   end
 
   valid_pdfs = Dir.glob("testimony/*.pdf").select { |path| valid_pdf?(path) }.sort
 
-  puts "Merging PDFs: #{valid_pdfs.join(" ")}"
+  STDERR.puts "Merging PDFs: #{valid_pdfs.join(" ")}"
   `pdfunite #{valid_pdfs.join(" ")} all-testimony.pdf`
 
   valid_pdfs.each do |path|
-    puts "PDF -> TXT: #{path}"
+    STDERR.puts "PDF -> TXT: #{path}"
     `pdftotext #{path}` unless File.exists?(path.gsub(".pdf", ".txt"))
   end
 
@@ -125,7 +125,7 @@ def prune_bad_testimony_files
   Dir.glob("testimony/*.pdf")
      .reject { |path| valid_pdf?(path) }
      .reject { |path| Time.now - File.mtime(path) < 5*60 }
-     .each   { |path| puts "Unlinking bad testimony file: #{path}" ; File.unlink(path) }
+     .each   { |path| STDERR.puts "Unlinking bad testimony file: #{path}" ; File.unlink(path) }
 end
 
 def needs_update?
@@ -146,18 +146,18 @@ $last_update = Time.at(0)
 
 Dir.mkdir("testimony") unless File.exists?("testimony")
 
-puts "Performing initial update..."
+STDERR.puts "Performing initial update..."
 update_results
 
 unless File.exists?("all-testimony.txt") && File.exists?("all-testimony.pdf") then
-  puts "Pruning bad testimony..."
+  STDERR.puts "Pruning bad testimony..."
   prune_bad_testimony_files
 
-  puts "Regenerating merged PDF and TXT files..."
+  STDERR.puts "Regenerating merged PDF and TXT files..."
   regenerate
 end
 
-puts "Ready to rock and roll!"
+STDERR.puts "Ready to rock and roll!"
 
 Thread.new do
   while true
